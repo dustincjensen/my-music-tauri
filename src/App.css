@@ -1,0 +1,93 @@
+.App {
+  text-align: center;
+  background-image: url('https://images.unsplash.com/photo-1448375240586-882707db888b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8Zm9yZXN0fGVufDB8fDB8fA%3D%3D&w=1000&q=80');
+  background-size: cover
+}
+
+.App-header {
+  backdrop-filter: blur(5px);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-mysection {
+  background-color: pink;
+  color: #282c34;
+}
+
+button {
+  font-size: calc(10px + 2vmin);
+
+  border-radius: 6px;
+  outline: none;
+  border: none;
+  color: white;
+  background: #0d6efd;
+  padding: 10px;
+}
+
+button:hover,
+button:focus {
+  background: #0a58ca;
+}
+
+.song {
+  background: #08121ccc;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+}
+
+.song.active {
+  background: #08121cff;
+}
+
+.songs_container { 
+  width: 100%;
+}
+
+.song_list {
+  list-style: none;
+  overflow-y: auto;
+  max-height: 450px;
+  margin: 0;
+  padding: 0;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  height: 20px;
+  width: 200px;
+  max-width: 100%;
+  margin: 25px auto;
+  background: #08121c;
+  /* border: 3px solid #08121c; */
+  border-radius: 0;
+  display: block;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  border: none;
+  height: 35px;
+  width: 10px;
+  border-radius: 0;
+  background: #0a58ca;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #08121c;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+}
