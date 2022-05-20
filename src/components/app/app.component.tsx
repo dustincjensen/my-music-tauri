@@ -1,17 +1,11 @@
-import { dialog } from '@tauri-apps/api';
+import { BackgroundImage, ScrollArea, Slider } from '@mantine/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/tauri';
 import { useEffect, useRef, useState } from 'react';
-
-import './app.css';
-
-// Interesting tauri commands
-//
-// appWindow.setDecorations(false);
-// appWindow.toggleMaximize();
-// setTimeout(() => {
-//   appWindow.requestUserAttention(UserAttentionType.Informational);
-// }, 2000);
+import geo from '../../assets/img/geo.jpg';
+import { formatSongTime } from '../../utils/song.utils';
+import { SongList } from '../song-list/song-list.component';
+import { useStyles } from './app.styles';
 
 type AudioProps = {
   /**
@@ -25,42 +19,20 @@ type AudioProps = {
   duration: number;
 };
 
-/**
- * Returns a formatted time string of the format (m:ss)
- *
- * @param seconds   The number of seconds.
- */
-const formatSongTime = (seconds: number) => {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  return `${minutes || 0}:${remainingSeconds > 9 ? remainingSeconds.toFixed(0) : '0' + remainingSeconds.toFixed(0)}`;
-};
 
-/**
- * Returns the short file name.
- *
- * @param songFullFileName  The song filename.
- */
-const fileName = (songFullFileName: string) => {
-  const parts = songFullFileName?.split('\\');
 
-  if (parts) {
-    const last = parts[parts.length - 1];
-    const lastDot = last.lastIndexOf('.');
-    return last.slice(0, lastDot);
-  }
 
-  return songFullFileName;
-};
 
-function App() {
+export const App = () => {
   const [audioSrc, setAudioSrc] = useState('');
   const [audioMeta, setAudioMeta] = useState<AudioProps>({ currentTime: 0, duration: 0 });
   const [songList, setSongList] = useState<string[]>([]);
-  const [filter, setFilter] = useState('');
+  // const [filter, setFilter] = useState('');
 
   const audioRef = useRef<HTMLAudioElement>(null);
-  const sliderRef = useRef<HTMLInputElement>(null);
+
+  const [sliderDragValue, setSliderDragValue] = useState<number | null>(null);
+  const styles = useStyles();
 
   // Listen to file drop in tauri
   useEffect(() => {
@@ -89,15 +61,7 @@ function App() {
       }
       const currentTime = audioRef.current.currentTime ?? 0;
       const duration = audioRef.current.duration || 0;
-
       setAudioMeta({ currentTime, duration });
-      const valPercent = currentTime / duration;
-
-      if (sliderRef.current) {
-        sliderRef.current.style.backgroundImage = `linear-gradient(to right, #0d6efd ${+valPercent * 100}%, #fff ${
-          +valPercent * 100
-        }%)`;
-      }
     }, 300);
 
     return () => {
@@ -106,48 +70,40 @@ function App() {
   }, []);
 
   return (
-    <div className='App'>
-      <header className='App-header'>
+    <BackgroundImage src={geo}>
+      <div className={styles.classes.backdrop}>
         <audio src={audioSrc} autoPlay ref={audioRef} />
 
-        <div>
-          <input
-            ref={sliderRef}
-            type='range'
-            min='0'
+        {/* TODO fix */}
+        <ScrollArea style={{ width: '100%', height: 'calc(100vh - 60px)' }}>
+          <SongList songs={songList} setActiveSong={(song: string) => setAudioSrc(convertFileSrc(song))} />
+        </ScrollArea>
+        <div className={styles.classes.controls} style={{ height: 60 }}>
+          <Slider
+            min={0}
             max={audioMeta.duration}
-            value={audioMeta.currentTime}
-            className='slider'
-            readOnly
+            value={(sliderDragValue as number) ?? audioMeta.currentTime}
+            showLabelOnHover={false}
+            label={formatSongTime((sliderDragValue as number) ?? audioMeta.currentTime)}
+            onChange={(value: number) => setSliderDragValue(value)}
+            onChangeEnd={(value: number) => {
+              if (audioRef.current) {
+                audioRef.current.currentTime = value;
+                setAudioMeta(m => ({ ...m, currentTime: value }));
+              }
+              setSliderDragValue(null);
+            }}
+            className={styles.classes.song_progress}
           />
+
           <div>
             {formatSongTime(audioMeta.currentTime)}/{formatSongTime(audioMeta.duration)}
           </div>
         </div>
-        <div className='songs_container'>
-          <h1>Songs</h1>
-          <input type='text' value={filter} onChange={e => setFilter(e.currentTarget.value)} />
-          <ul className='song_list'>
-            {songList
-              .filter(s => s.toLowerCase().indexOf(filter.toLowerCase()) >= 0)
-              .map(s => {
-                // TODO don't convert S on each render cycle lol
-                return (
-                  <li key={s}>
-                    <button
-                      onClick={() => setAudioSrc(convertFileSrc(s))}
-                      className={`song ${audioSrc === convertFileSrc(s) ? 'active' : ''}`}
-                    >
-                      {fileName(s)}
-                    </button>
-                  </li>
-                );
-              })}
-          </ul>
-        </div>
+        
 
         {/* Add a single file to the song list. */}
-        <button
+        {/* <Button
           onClick={async () => {
             // Access file system file dialog.
             const file = await dialog.open();
@@ -161,13 +117,11 @@ function App() {
           }}
         >
           Open File
-        </button>
+        </Button> */}
 
         {/* Clear the song list */}
-        <button onClick={() => setSongList([])}>Clear</button>
-      </header>
-    </div>
+        {/* <Button onClick={() => setSongList([])}>Clear</Button> */}
+      </div>
+    </BackgroundImage>
   );
-}
-
-export default App;
+};

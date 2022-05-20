@@ -13,6 +13,8 @@
     "precommit": "npm run prettier && npm run lint"
   },
   "dependencies": {
+    "@mantine/core": "^4.2.5",
+    "@mantine/hooks": "^4.2.5",
     "@tauri-apps/api": "^1.0.0-rc.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
