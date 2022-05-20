@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
-import { convertFileSrc } from '@tauri-apps/api/tauri';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { dialog } from '@tauri-apps/api';
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
+import { convertFileSrc } from '@tauri-apps/api/tauri';
+import { useEffect, useRef, useState } from 'react';
 
-import './App.css'
+import './app.css';
 
 // Interesting tauri commands
 //
@@ -23,22 +23,22 @@ type AudioProps = {
    * Total duration of the song.
    */
   duration: number;
-}
+};
 
 /**
  * Returns a formatted time string of the format (m:ss)
- * 
+ *
  * @param seconds   The number of seconds.
  */
 const formatSongTime = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
   return `${minutes || 0}:${remainingSeconds > 9 ? remainingSeconds.toFixed(0) : '0' + remainingSeconds.toFixed(0)}`;
-}
+};
 
 /**
  * Returns the short file name.
- * 
+ *
  * @param songFullFileName  The song filename.
  */
 const fileName = (songFullFileName: string) => {
@@ -51,7 +51,7 @@ const fileName = (songFullFileName: string) => {
   }
 
   return songFullFileName;
-}
+};
 
 function App() {
   const [audioSrc, setAudioSrc] = useState('');
@@ -59,8 +59,8 @@ function App() {
   const [songList, setSongList] = useState<string[]>([]);
   const [filter, setFilter] = useState('');
 
-  const audioRef = useRef<any>();
-  const sliderRef = useRef<any>();
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const sliderRef = useRef<HTMLInputElement>(null);
 
   // Listen to file drop in tauri
   useEffect(() => {
@@ -74,7 +74,7 @@ function App() {
 
     return () => {
       unlisten();
-    }
+    };
   }, []);
 
   // Setup an interval to update the slider and current time / duration.
@@ -84,62 +84,90 @@ function App() {
     }
 
     const interval = setInterval(() => {
+      if (!audioRef.current) {
+        return;
+      }
       const currentTime = audioRef.current.currentTime ?? 0;
-      const duration = audioRef.current.duration || 0
+      const duration = audioRef.current.duration || 0;
 
       setAudioMeta({ currentTime, duration });
       const valPercent = currentTime / duration;
-      sliderRef.current.style.backgroundImage = `linear-gradient(to right, #0d6efd ${+valPercent * 100}%, #fff ${+valPercent * 100}%)`;
+
+      if (sliderRef.current) {
+        sliderRef.current.style.backgroundImage = `linear-gradient(to right, #0d6efd ${+valPercent * 100}%, #fff ${
+          +valPercent * 100
+        }%)`;
+      }
     }, 300);
 
     return () => {
       clearInterval(interval);
-    }
+    };
   }, []);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <audio src={audioSrc} autoPlay ref={audioRef}/>
+    <div className='App'>
+      <header className='App-header'>
+        <audio src={audioSrc} autoPlay ref={audioRef} />
 
         <div>
-          <input ref={sliderRef} type="range" min="0" max={audioMeta.duration} value={audioMeta.currentTime} className='slider' readOnly />
-          <div>{formatSongTime(audioMeta.currentTime)}/{formatSongTime(audioMeta.duration)}</div>
+          <input
+            ref={sliderRef}
+            type='range'
+            min='0'
+            max={audioMeta.duration}
+            value={audioMeta.currentTime}
+            className='slider'
+            readOnly
+          />
+          <div>
+            {formatSongTime(audioMeta.currentTime)}/{formatSongTime(audioMeta.duration)}
+          </div>
         </div>
         <div className='songs_container'>
           <h1>Songs</h1>
-          <input type="text" value={filter} onChange={e => setFilter(e.currentTarget.value)} />
+          <input type='text' value={filter} onChange={e => setFilter(e.currentTarget.value)} />
           <ul className='song_list'>
-          {songList
-            .filter(s => s.toLowerCase().indexOf(filter.toLowerCase()) >= 0)
-            .map(s => {
-              // TODO don't convert S on each render cycle lol
-              return <li key={s}>
-                <button onClick={() => setAudioSrc(convertFileSrc(s))} className={`song ${audioSrc === convertFileSrc(s) ? 'active' : ''}`}>{fileName(s)}</button>
-              </li>
-            })}
+            {songList
+              .filter(s => s.toLowerCase().indexOf(filter.toLowerCase()) >= 0)
+              .map(s => {
+                // TODO don't convert S on each render cycle lol
+                return (
+                  <li key={s}>
+                    <button
+                      onClick={() => setAudioSrc(convertFileSrc(s))}
+                      className={`song ${audioSrc === convertFileSrc(s) ? 'active' : ''}`}
+                    >
+                      {fileName(s)}
+                    </button>
+                  </li>
+                );
+              })}
           </ul>
         </div>
 
         {/* Add a single file to the song list. */}
-        <button onClick={async () => {
-          // Access file system file dialog.
-          const file = await dialog.open();
+        <button
+          onClick={async () => {
+            // Access file system file dialog.
+            const file = await dialog.open();
 
-          if (file) {
-            setSongList(l => [...l, file as string]);
-            if (!audioSrc) {
-              setAudioSrc(convertFileSrc(file as string));
+            if (file) {
+              setSongList(l => [...l, file as string]);
+              if (!audioSrc) {
+                setAudioSrc(convertFileSrc(file as string));
+              }
             }
-          }
-
-        }}>Open File</button>
+          }}
+        >
+          Open File
+        </button>
 
         {/* Clear the song list */}
         <button onClick={() => setSongList([])}>Clear</button>
       </header>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
